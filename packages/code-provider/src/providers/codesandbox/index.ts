@@ -64,6 +64,14 @@ import { listFiles } from './utils/list-files';
 import { readFile } from './utils/read-file';
 import { writeFile } from './utils/write-file';
 
+function getCsbToken(): string {
+    const token = process.env.CSB_API_KEY;
+    if (!token) {
+        throw new Error('Missing CSB_API_KEY for CodeSandbox SDK authentication');
+    }
+    return token;
+}
+
 export interface CodesandboxProviderOptions {
     sandboxId?: string;
     userId?: string;
@@ -116,7 +124,7 @@ export class CodesandboxProvider extends Provider {
             }
         } else {
             // backend path, use environment variables
-            const sdk = new CodeSandbox();
+            const sdk = new CodeSandbox(getCsbToken());
             this.sandbox = await sdk.sandboxes.resume(this.options.sandboxId);
             if (this.options.initClient) {
                 this._client = await this.sandbox.connect();
@@ -158,7 +166,7 @@ export class CodesandboxProvider extends Provider {
     }
 
     static async createProject(input: CreateProjectInput): Promise<CreateProjectOutput> {
-        const sdk = new CodeSandbox();
+        const sdk = new CodeSandbox(getCsbToken());
         const newSandbox = await sdk.sandboxes.create({
             id: input.id,
             source: 'template',
@@ -175,7 +183,7 @@ export class CodesandboxProvider extends Provider {
         repoUrl: string;
         branch: string;
     }): Promise<CreateProjectOutput> {
-        const sdk = new CodeSandbox();
+        const sdk = new CodeSandbox(getCsbToken());
         const TIMEOUT_MS = 30000;
 
         const createPromise = sdk.sandboxes.create({
@@ -200,7 +208,7 @@ export class CodesandboxProvider extends Provider {
 
     async pauseProject(input: PauseProjectInput): Promise<PauseProjectOutput> {
         if (this.sandbox && this.options.sandboxId) {
-            const sdk = new CodeSandbox();
+            const sdk = new CodeSandbox(getCsbToken());
             await sdk.sandboxes.hibernate(this.options.sandboxId);
         }
         return {};
@@ -208,7 +216,7 @@ export class CodesandboxProvider extends Provider {
 
     async stopProject(input: StopProjectInput): Promise<StopProjectOutput> {
         if (this.sandbox && this.options.sandboxId) {
-            const sdk = new CodeSandbox();
+            const sdk = new CodeSandbox(getCsbToken());
             await sdk.sandboxes.shutdown(this.options.sandboxId);
         }
         return {};
@@ -216,7 +224,7 @@ export class CodesandboxProvider extends Provider {
 
     async listProjects(input: ListProjectsInput): Promise<ListProjectsOutput> {
         if (this.sandbox) {
-            const sdk = new CodeSandbox();
+            const sdk = new CodeSandbox(getCsbToken());
             const projects = await sdk.sandboxes.list();
             return {
                 projects: projects.sandboxes.map((project) => ({
